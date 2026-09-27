@@ -139,7 +139,7 @@ Loads a committed run (or the bundled `sample-peer-run.json`) and renders:
 | Secret | `SCREENER_PASSWORD` | screener.in login |
 | Secret | `FMP_API_KEY` | *optional*, reserved (unused in Prompt 1) |
 | Variable | `AWS_REGION` | default `us-east-1` |
-| Variable | `BEDROCK_MODEL_IDS` | comma list, default `anthropic.claude-sonnet-5,us.anthropic.claude-sonnet-5` |
+| Variable | `BEDROCK_MODEL_IDS` | comma list, default `us.anthropic.claude-sonnet-5,anthropic.claude-sonnet-5` (inference profile first) |
 
 **Cloudflare Worker** (`wrangler secret put …` / dashboard, or `vars` in `wrangler.jsonc`)
 
@@ -249,6 +249,14 @@ Local Worker dev: put secrets in `.dev.vars` (git-ignored).
 - **Bedrock model chain**: 429/≥500 ⇒ try next model (busy); 400/403/404 ⇒ try
   next (unusable). The pipeline waits patiently; the Worker uses a trimmed 2–3
   attempt version.
+- **Bedrock model IDs + `temperature`** (found by running a live job): the bare
+  `anthropic.claude-sonnet-5` id has no on-demand throughput — you must use the
+  region-prefixed **inference profile** (`us.anthropic.claude-sonnet-5` for
+  `us-*` regions; `eu.`/`apac.` elsewhere), which now leads the default chain.
+  Claude Sonnet 5 also **rejects `temperature`** on Converse (HTTP 400), so the
+  client no longer sends it. If you set the Actions **variable**
+  `BEDROCK_MODEL_IDS`, put the inference-profile id first (or unset it to take
+  the fixed default).
 - **Status classification is live** (screener → Yahoo → private) — never trusted
   from the model — to avoid mislabelling a listed company as private. An
   Indian listing that screener's search misses but Yahoo finds is routed through

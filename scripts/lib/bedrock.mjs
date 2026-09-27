@@ -8,7 +8,11 @@ import { sleep, log, warn } from './util.mjs';
 // `process` is undefined in a Worker without nodejs_compat, so guard the access.
 const ENV = typeof process !== 'undefined' && process.env ? process.env : {};
 
-const DEFAULT_MODELS = 'anthropic.claude-sonnet-5,us.anthropic.claude-sonnet-5';
+// The bare `anthropic.claude-sonnet-5` id needs provisioned throughput on
+// Bedrock ("on-demand throughput isn't supported"); the region-prefixed
+// cross-region INFERENCE PROFILE (`us.` for us-* regions) is the on-demand id,
+// so lead with it and keep the bare id only as a last-resort fallback.
+const DEFAULT_MODELS = 'us.anthropic.claude-sonnet-5,anthropic.claude-sonnet-5';
 
 function cfg(env) {
   env = env || ENV || {};
@@ -28,9 +32,13 @@ async function converseOnce({ region, apiKey, model, system, user, timeoutMs }) 
     `https://bedrock-runtime.${region}.amazonaws.com/model/` +
     `${encodeURIComponent(model)}/converse`;
   const body = {
+    // NOTE: `temperature` is intentionally omitted. Claude Sonnet 5 (and the
+    // rest of the Claude 5 family) reject sampling params on Bedrock Converse
+    // ("'temperature' is deprecated for this model" -> HTTP 400). maxTokens is
+    // still honoured; the model runs at its default (near-deterministic) sampling.
     system: [{ text: system }],
     messages: [{ role: 'user', content: [{ text: user }] }],
-    inferenceConfig: { temperature: 0, maxTokens: 16000 },
+    inferenceConfig: { maxTokens: 16000 },
   };
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), timeoutMs);

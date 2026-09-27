@@ -17,7 +17,7 @@
   // `wrangler secret put <NAME>` or in the Cloudflare dashboard — never here.
   "vars": {
     "AWS_REGION": "us-east-1",
-    "BEDROCK_MODEL_IDS": "anthropic.claude-sonnet-5,us.anthropic.claude-sonnet-5",
+    "BEDROCK_MODEL_IDS": "us.anthropic.claude-sonnet-5,anthropic.claude-sonnet-5",
     "GITHUB_REPO": "ceekay-munshot/peerfinder",
     "GITHUB_WORKFLOW_FILE": "peer-run.yml",
     "GITHUB_DEFAULT_REF": "main"
