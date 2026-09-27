@@ -20,6 +20,8 @@ export const CURRENT_KEYS = [
 export const SERIES_KEYS = [
   'revenue', 'ebitda_pct', 'npm_pct', 'roce_pct', 'roe_pct',
   'promoter_pct', 'fii_pct', 'dii_pct',
+  // A7 additions — working-capital days + leverage + valuation trend:
+  'debtor_days', 'inventory_days', 'payable_days', 'ccc_days', 'wc_days', 'de', 'pe',
 ];
 
 export function emptyCurrent() {

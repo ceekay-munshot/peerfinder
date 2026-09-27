@@ -34,10 +34,11 @@ export function tvTicker(rec) {
   };
   if (suf && map[suf]) return map[suf]();
   if (!suf) {
-    // US (no suffix): pick NASDAQ vs NYSE from the Yahoo exchange code.
-    const ex = String(rec._yahoo_exchange || '').toUpperCase();
-    if (['NYQ', 'NYS'].includes(ex)) return `NYSE:${base}`;
-    if (['PCX', 'ASE'].includes(ex)) return `AMEX:${base}`;
+    // US (no suffix): pick NASDAQ / NYSE / AMEX from the Yahoo exchange code OR
+    // its display name (the latter is what survives a resume — see A9).
+    const ex = String(rec._yahoo_exchange || rec.exchange || '').toUpperCase();
+    if (['NYQ', 'NYS'].includes(ex) || ex.includes('NYSE')) return `NYSE:${base}`;
+    if (['PCX', 'ASE'].includes(ex) || ex.includes('AMEX') || ex.includes('AMERICAN')) return `AMEX:${base}`;
     return `NASDAQ:${base}`;
   }
   return null;

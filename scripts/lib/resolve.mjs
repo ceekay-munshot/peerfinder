@@ -12,8 +12,11 @@
 import { fetchJson, fetchText, slugify, warn, log, BROWSER_UA } from './util.mjs';
 import { callBedrockJSON } from './bedrock.mjs';
 
-// Screener's public search API. Returns [{ id, name, url }] (best-effort, [] on error).
-export async function screenerSearch(q) {
+// Screener's public search API. Returns [{ id, name, url }].
+// By default it swallows transient failures and returns [] (a genuine "no
+// match" and a network/403/429 look the same). Pass { throwOnError: true } to
+// have the caller distinguish a failed lookup from an empty result (see A1).
+export async function screenerSearch(q, { throwOnError = false } = {}) {
   try {
     const url = `https://www.screener.in/api/company/search/?q=${encodeURIComponent(q)}`;
     const data = await fetchJson(url, { headers: { 'user-agent': BROWSER_UA } },
@@ -24,6 +27,7 @@ export async function screenerSearch(q) {
     return [];
   } catch (e) {
     warn(`screenerSearch failed for "${q}": ${e.message}`);
+    if (throwOnError) throw e;
     return [];
   }
 }
@@ -89,20 +93,40 @@ export async function resolveInput(query, { env } = {}) {
     warn(`resolve LLM failed: ${e.message}`);
   }
 
-  // Fallbacks that never fail.
-  const kind = json?.kind === 'industry' || json?.kind === 'company'
-    ? json.kind
-    : (top ? 'company' : 'industry');
-  const business_definition =
-    (json?.business_definition && String(json.business_definition).trim()) ||
-    snippet ||
-    query;
+  // Fallbacks that never fail. Trust the LLM classification when usable. When it
+  // is NOT (call failed / unparseable), a bare screener hit is NOT enough to call
+  // the query a "company": only do so if the hit NAME matches the query. Otherwise
+  // treat it as an INDUSTRY and keep the query itself as the definition, so
+  // "cement" / "ceramic tiles" don't benchmark one arbitrary company (A3).
+  const norm = (s) => String(s || '').toLowerCase()
+    .replace(/\b(ltd|limited|inc|corp|corporation|co|company|plc|holdings|group|industries|the)\b/g, '')
+    .replace(/[^a-z0-9]+/g, '').trim();
+  const nameMatches = (a, b) => {
+    const na = norm(a), nb = norm(b);
+    if (!na || !nb) return false;
+    return na === nb || (na.length >= 4 && (na.includes(nb) || nb.includes(na)));
+  };
+
+  let kind, canonical_name, business_definition;
+  if (json?.kind === 'company' || json?.kind === 'industry') {
+    kind = json.kind;
+    canonical_name = json.canonical_name || top?.name || query;
+    business_definition = (json.business_definition && String(json.business_definition).trim()) || snippet || query;
+  } else if (top && nameMatches(top.name, query)) {
+    kind = 'company';
+    canonical_name = top.name;
+    business_definition = String(snippet || '').trim() || query;
+  } else {
+    kind = 'industry';
+    canonical_name = query;
+    business_definition = query; // keep the original query as the definition
+  }
 
   return {
     slug,
     kind,
     query,
-    canonical_name: json?.canonical_name || top?.name || query,
+    canonical_name,
     business_definition,
     main_segment: json?.main_segment || null,
     products: Array.isArray(json?.products) ? json.products : [],

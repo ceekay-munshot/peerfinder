@@ -268,6 +268,46 @@ function ribbonNum(ribbon, names) {
   return null;
 }
 
+// D/E per year = Borrowings / (Equity Capital + Reserves), aligned by year.
+function deSeries(balanceSheet) {
+  const borrow = toSeries(balanceSheet.borrowings);
+  const eq = new Map(toSeries(balanceSheet.equity).map((p) => [p.year, p.value]));
+  const res = new Map(toSeries(balanceSheet.reserves).map((p) => [p.year, p.value]));
+  const out = [];
+  for (const b of borrow) {
+    const nw = (eq.get(b.year) || 0) + (res.get(b.year) || 0);
+    if (nw > 0 && Number.isFinite(b.value)) out.push({ year: b.year, value: round(b.value / nw, 2) });
+  }
+  return out;
+}
+
+// Nearest daily close to a target date, within ~150 days (else null).
+function nearestClose(history, targetDate) {
+  if (!history || !history.length) return null;
+  const t = Date.parse(targetDate);
+  let best = null;
+  let bestDiff = Infinity;
+  for (const h of history) {
+    const d = Math.abs(Date.parse(h.date) - t);
+    if (d < bestDiff) { bestDiff = d; best = h.close; }
+  }
+  return bestDiff <= 150 * 864e5 ? best : null;
+}
+
+// Historical P/E from reported annual EPS × the nearest year-end price (Indian
+// FY ends ~Mar 31). Computed from real inputs, not fabricated; blank where
+// EPS<=0 or no nearby close exists.
+function peSeries(epsSeries, history) {
+  if (!epsSeries?.length || !history?.length) return [];
+  const out = [];
+  for (const p of epsSeries) {
+    if (!(p.value > 0)) continue;
+    const close = nearestClose(history, `${p.year}-03-31`);
+    if (close != null) out.push({ year: p.year, value: round(close / p.value, 2) });
+  }
+  return out;
+}
+
 export function mapParsedToRecord(parsed, rec) {
   const { ribbon, pl, ranges, ratios, balanceSheet, shareholding } = parsed;
 
@@ -294,6 +334,14 @@ export function mapParsedToRecord(parsed, rec) {
   rec.series.promoter_pct = promoterSeries;
   rec.series.fii_pct = fiiSeries;
   rec.series.dii_pct = diiSeries;
+  // A7 trend series: working-capital days (from #ratios) + derived D/E and P/E.
+  rec.series.debtor_days = toSeries(ratios.debtorDays);
+  rec.series.inventory_days = toSeries(ratios.inventoryDays);
+  rec.series.payable_days = toSeries(ratios.payableDays);
+  rec.series.ccc_days = toSeries(ratios.ccc);
+  rec.series.wc_days = toSeries(ratios.wcDays);
+  rec.series.de = deSeries(balanceSheet);
+  rec.series.pe = peSeries(toSeries(pl.eps), parsed.price?.history);
 
   const cur = rec.current;
   const lSales = lastOf(salesSeries);

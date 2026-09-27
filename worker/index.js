@@ -64,10 +64,53 @@ async function handleResolve(request, env) {
   return json({ kind, business_definition, canonical_name: out?.canonical_name || top?.name || q, slug });
 }
 
+function clientIp(request) {
+  return request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
+}
+
+// Optional access-code gate. Enabled only when RUN_ACCESS_CODE secret is set.
+// The UI asks for the code once and sends it as the `x-run-code` header (A6).
+function accessCodeError(env, request, body) {
+  const code = env.RUN_ACCESS_CODE;
+  if (!code) return null;
+  const provided = request.headers.get('x-run-code') || body?.code || '';
+  if (provided === code) return null;
+  return { need_code: true, error: 'A run access code is required for this deployment.' };
+}
+
+// Durable per-IP + global daily rate limit via Cloudflare KV. Enabled only when
+// a KV namespace is bound as env.RATE_LIMIT (see README/wrangler for the binding).
+// Never-fails: a KV hiccup must not block a legitimate run (A6).
+async function checkRateLimit(env, request) {
+  const kv = env.RATE_LIMIT;
+  if (!kv) return { ok: true, skipped: true };
+  try {
+    const day = new Date().toISOString().slice(0, 10);
+    const ip = clientIp(request);
+    const perIpCap = Number(env.RATE_LIMIT_PER_IP || 20);
+    const dailyCap = Number(env.RATE_LIMIT_DAILY || 200);
+    const ipKey = `rl:ip:${ip}:${day}`;
+    const gKey = `rl:global:${day}`;
+    const [ipRaw, gRaw] = await Promise.all([kv.get(ipKey), kv.get(gKey)]);
+    const ipN = Number(ipRaw || 0);
+    const gN = Number(gRaw || 0);
+    if (ipN >= perIpCap) return { ok: false, reason: `Per-IP daily run limit (${perIpCap}) reached — try again tomorrow.` };
+    if (gN >= dailyCap) return { ok: false, reason: `Global daily run limit (${dailyCap}) reached — try again tomorrow.` };
+    await Promise.all([
+      kv.put(ipKey, String(ipN + 1), { expirationTtl: 172800 }),
+      kv.put(gKey, String(gN + 1), { expirationTtl: 172800 }),
+    ]);
+    return { ok: true };
+  } catch {
+    return { ok: true, skipped: true };
+  }
+}
+
 async function handleRun(request, env) {
-  const { query } = await readBody(request);
-  const q = (query || '').trim();
+  const body = await readBody(request);
+  const q = (body.query || '').trim();
   const slug = slugify(q);
+  const dispatched_at = new Date().toISOString();
   const repo = env.GITHUB_REPO;
   const token = env.GITHUB_TOKEN;
   const workflow = env.GITHUB_WORKFLOW_FILE || 'peer-run.yml';
@@ -75,10 +118,17 @@ async function handleRun(request, env) {
 
   if (!q) return json({ dispatched: false, slug, error: 'query required' }, 200);
 
+  // Abuse controls (both optional; at least one recommended in production).
+  const codeErr = accessCodeError(env, request, body);
+  if (codeErr) return json({ dispatched: false, slug, ...codeErr }, 200);
+  const rl = await checkRateLimit(env, request);
+  if (!rl.ok) return json({ dispatched: false, slug, rate_limited: true, error: rl.reason }, 200);
+
   if (!repo || !token) {
     return json({
       dispatched: false,
       slug,
+      dispatched_at,
       manual: {
         message: 'Automatic dispatch is not configured (GITHUB_TOKEN / GITHUB_REPO unset on the Worker).',
         steps: [
@@ -102,7 +152,7 @@ async function handleRun(request, env) {
       },
       body: JSON.stringify({ ref, inputs: { query: q } }),
     });
-    if (res.status === 204) return json({ dispatched: true, slug, ref });
+    if (res.status === 204) return json({ dispatched: true, slug, ref, dispatched_at });
     const detail = await res.text().catch(() => '');
     return json({
       dispatched: false,
@@ -126,53 +176,88 @@ async function assetExists(env, request, slug) {
   } catch { return null; }
 }
 
-async function latestRunState(env) {
+// Find the workflow run for THIS dispatch (the earliest run created at/after the
+// dispatch time), not merely the repo's latest run (A5b). Falls back to the most
+// recent run only when no dispatch time is known (e.g. a deep-link poll).
+async function runStateForDispatch(env, sinceMs) {
   const repo = env.GITHUB_REPO;
   const token = env.GITHUB_TOKEN;
   const workflow = env.GITHUB_WORKFLOW_FILE || 'peer-run.yml';
   if (!repo || !token) return null;
   try {
-    const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${workflow}/runs?per_page=1`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'peerfinder-worker',
-      },
-    });
+    const res = await fetch(
+      `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/runs?event=workflow_dispatch&per_page=20`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'User-Agent': 'peerfinder-worker',
+        },
+      }
+    );
     if (!res.ok) return null;
     const data = await res.json();
-    const run = data?.workflow_runs?.[0];
-    if (!run) return null;
-    return { status: run.status, conclusion: run.conclusion };
+    const runs = data?.workflow_runs || [];
+    if (!runs.length) return null;
+    let run;
+    if (Number.isFinite(sinceMs)) {
+      // The run we triggered is the first one created at/after our dispatch
+      // (allow ~60s clock skew). If none yet, this dispatch has not started.
+      const ours = runs
+        .filter((r) => Date.parse(r.created_at) >= sinceMs - 60000)
+        .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+      run = ours[0];
+      if (!run) return { status: 'queued', conclusion: null };
+    } else {
+      run = runs[0];
+    }
+    return { status: run.status, conclusion: run.conclusion, created_at: run.created_at };
   } catch { return null; }
 }
 
+// Non-success terminal conclusions all map to "failed" (A5c).
+const NON_SUCCESS = new Set(['failure', 'cancelled', 'timed_out', 'action_required', 'startup_failure', 'stale', 'neutral', 'skipped']);
+
 async function handleStatus(request, env) {
   const url = new URL(request.url);
-  const slug = slugify(url.searchParams.get('slug') || '');
-  if (!slug || slug === 'run') return json({ state: 'starting', slug });
+  // Validate the PRESENCE of the query param, not the normalized slug (A5d):
+  // a legit query that happens to slugify oddly must not be rejected.
+  const rawSlug = url.searchParams.get('slug');
+  if (!rawSlug || !rawSlug.trim()) return json({ state: 'starting' });
+  const slug = slugify(rawSlug);
+  const since = url.searchParams.get('since');
+  const sinceMs = since ? Date.parse(since) : NaN;
 
   const data = await assetExists(env, request, slug);
   if (data) {
-    const b = data.buckets || {};
-    return json({
-      state: 'done',
-      slug,
-      generated_at: data.meta?.generated_at || null,
-      counts: {
-        india_listed: (b.india_listed || []).length,
-        global_listed: (b.global_listed || []).length,
-        india_private: (b.india_private || []).length,
-      },
-    });
+    // Only "done" if the committed file was generated AFTER this dispatch — a
+    // pre-existing older file must NOT short-circuit a freshly queued run (A5a).
+    const genMs = Date.parse(data.meta?.generated_at || '');
+    const fresh = !Number.isFinite(sinceMs) || (Number.isFinite(genMs) && genMs >= sinceMs - 1000);
+    if (fresh) {
+      const b = data.buckets || {};
+      return json({
+        state: 'done',
+        slug,
+        generated_at: data.meta?.generated_at || null,
+        counts: {
+          india_listed: (b.india_listed || []).length,
+          global_listed: (b.global_listed || []).length,
+          india_private: (b.india_private || []).length,
+        },
+      });
+    }
+    // else: stale pre-existing file — treat as still running below.
   }
 
-  // Not committed yet — best-effort state from the latest workflow run.
-  const gh = await latestRunState(env);
+  const gh = await runStateForDispatch(env, sinceMs);
   if (gh) {
     if (gh.status === 'queued' || gh.status === 'in_progress') return json({ state: 'running', slug });
-    if (gh.status === 'completed' && gh.conclusion === 'failure') return json({ state: 'failed', slug });
+    if (gh.status === 'completed' && gh.conclusion && gh.conclusion !== 'success') {
+      if (NON_SUCCESS.has(gh.conclusion)) return json({ state: 'failed', slug, conclusion: gh.conclusion });
+    }
+    // completed+success but file not yet visible -> still committing/deploying.
   }
   return json({ state: 'running', slug });
 }
