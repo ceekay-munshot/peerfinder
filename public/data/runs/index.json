@@ -1,3 +1,14 @@
 [
-  { "slug": "sample-peer-run", "query": "Sample industry (synthetic fixture)", "kind": "industry", "generated_at": "2026-01-01T00:00:00.000Z" }
+  {
+    "slug": "stylam-industries",
+    "query": "stylam Industries",
+    "kind": "company",
+    "generated_at": "2026-09-27T20:27:42.089Z"
+  },
+  {
+    "slug": "sample-peer-run",
+    "query": "Sample industry (synthetic fixture)",
+    "kind": "industry",
+    "generated_at": "2026-01-01T00:00:00.000Z"
+  }
 ]
