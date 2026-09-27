@@ -1,0 +1,84 @@
+name: peer-run
+
+# Heavy peer-finding + scraping run. Triggered by the Worker (workflow_dispatch)
+# or manually from the Actions tab. Commits public/data/runs/<slug>.json.
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Industry or company to benchmark"
+        required: true
+        type: string
+      start_at:
+        description: "Resume the India scrape from this index (optional)"
+        required: false
+        default: "0"
+        type: string
+
+# Queue runs so concurrent commits don't collide (do not cancel in-flight work).
+concurrency:
+  group: peer-run
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Playwright + Cheerio
+        run: |
+          npm install playwright@1 cheerio@1 --no-save
+          npx playwright install --with-deps chromium
+
+      - name: Run peer benchmarking
+        env:
+          QUERY: ${{ inputs.query }}
+          START_AT: ${{ inputs.start_at }}
+          BEDROCK_API_KEY: ${{ secrets.BEDROCK_API_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          BEDROCK_MODEL_IDS: ${{ vars.BEDROCK_MODEL_IDS }}
+          SCREENER_EMAIL: ${{ secrets.SCREENER_EMAIL }}
+          SCREENER_PASSWORD: ${{ secrets.SCREENER_PASSWORD }}
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+          PRICE_RANGE: "5y"
+        run: node scripts/run-peers.mjs "$QUERY"
+
+      - name: Commit run output (rebase-retry push loop)
+        if: always()
+        env:
+          QUERY: ${{ inputs.query }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/runs public/data/cache 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+            exit 0
+          fi
+          git commit -m "data: peer run for '${QUERY}'" -m "Automated commit from peer-run workflow." || true
+          n=0
+          until [ $n -ge 4 ]; do
+            git fetch origin "$BRANCH" || true
+            git rebase "origin/$BRANCH" || git rebase --abort || true
+            if git push origin "HEAD:$BRANCH"; then
+              echo "Pushed to $BRANCH."
+              exit 0
+            fi
+            n=$((n + 1))
+            echo "Push attempt $n failed; backing off."
+            sleep $((2 ** n))
+          done
+          echo "Push failed after retries."
+          exit 1

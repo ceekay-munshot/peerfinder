@@ -1,0 +1,18 @@
+{
+  "name": "peerfinder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "True Peer Benchmarking dashboard — foundation, data engine and true-peer finder (Prompt 1 of 3).",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "run:peers": "node scripts/run-peers.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

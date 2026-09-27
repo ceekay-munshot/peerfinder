@@ -1,0 +1,25 @@
+{
+  // Cloudflare Worker + static assets. Frontend lives in ./public and is served
+  // by the ASSETS binding; the Worker (worker/index.js) handles /api/* routes and
+  // falls through to static assets for everything else.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "peerfinder",
+  "main": "worker/index.js",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  // Non-secret vars. Secrets (BEDROCK_API_KEY, GITHUB_TOKEN) are set with
+  // `wrangler secret put <NAME>` or in the Cloudflare dashboard — never here.
+  "vars": {
+    "AWS_REGION": "us-east-1",
+    "BEDROCK_MODEL_IDS": "anthropic.claude-sonnet-5,us.anthropic.claude-sonnet-5",
+    "GITHUB_REPO": "ceekay-munshot/peerfinder",
+    "GITHUB_WORKFLOW_FILE": "peer-run.yml",
+    "GITHUB_DEFAULT_REF": "main"
+  }
+}
