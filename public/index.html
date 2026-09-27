@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>True Peer Benchmarking</title>
+  <meta name="description" content="Find a company's or industry's true peers — Indian listed, global listed and Indian private — and benchmark their financials." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
+  <!-- Chart.js is loaded now for the rich dashboard in Prompt 2 (not heavily used yet). -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>📊 True Peer Benchmarking</h1>
+      <p class="tagline">Give an <strong>industry</strong> or a <strong>company</strong>. Get its <strong>true peers</strong> — Indian listed, global listed, Indian private — with financials. <span class="muted">(Prompt 1: foundation &amp; data engine.)</span></p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Search -->
+    <section class="card search-card">
+      <label for="query" class="field-label">Industry or company</label>
+      <div class="search-row">
+        <input id="query" type="text" placeholder="e.g. Ceramic tiles, Cables, Reliance Industries…" autocomplete="off" />
+        <button id="run-btn" class="btn primary">Run peer benchmarking</button>
+      </div>
+      <p class="hint">
+        <span id="resolve-line" class="muted">The engine reads the business, finds true peers (never screener's peer list), then pulls financials.</span>
+      </p>
+      <p class="hint small">
+        <a href="#" id="sample-link">View a sample run</a>
+        <span id="recent-wrap" class="muted"></span>
+      </p>
+    </section>
+
+    <!-- Progress -->
+    <section id="progress" class="card hidden">
+      <div class="progress-head">
+        <strong id="stage-msg">Starting…</strong>
+        <span id="stage-sub" class="muted small"></span>
+      </div>
+      <div class="bar"><div id="bar-fill" class="bar-fill"></div></div>
+      <p id="manual-steps" class="hint small hidden"></p>
+    </section>
+
+    <!-- Meta -->
+    <section id="meta" class="card hidden">
+      <div class="meta-grid">
+        <div><span class="k">Query</span><span id="m-query" class="v"></span></div>
+        <div><span class="k">Kind</span><span id="m-kind" class="v"></span></div>
+        <div><span class="k">Business definition</span><span id="m-def" class="v"></span></div>
+        <div><span class="k">Generated</span><span id="m-gen" class="v"></span></div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="hidden">
+      <div class="bucket" id="bucket-india"></div>
+      <div class="bucket" id="bucket-global"></div>
+      <div class="bucket" id="bucket-private"></div>
+      <details id="notes" class="card notes hidden">
+        <summary>Run notes &amp; provenance</summary>
+        <ul id="notes-list"></ul>
+      </details>
+    </section>
+
+    <section id="empty" class="card muted">
+      Enter an industry or company above and press <strong>Run peer benchmarking</strong>. A run takes a while (it scrapes screener and fetches global data in GitHub Actions); this page polls until the data is committed, then renders it.
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <span class="muted small">Honesty first: blanks stay blank (never 0), computed values are labelled, every peer carries a source. Rich dashboard &amp; outperformer scoring arrive in Prompt 2.</span>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
