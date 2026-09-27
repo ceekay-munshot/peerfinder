@@ -88,31 +88,45 @@ function codeFromScreenerUrl(url) {
   return m ? m[1] : null;
 }
 
-// LIVE status classification (critical). screener -> Yahoo -> private.
-export async function classifyStatus(name, { env } = {}) {
-  // 1) Indian listed via screener's own search API.
-  try {
-    const matches = await screenerSearch(name);
-    const hit = matches.find((m) => looseMatch(m.name, name)) || matches[0];
-    if (hit && looseMatch(hit.name, name)) {
-      const code = codeFromScreenerUrl(hit.url);
-      if (code) {
-        return {
-          status: 'india_listed',
-          ticker: code,
-          name: hit.name,
-          screener_url: hit.url,
-        };
-      }
+// Call a search with retry+backoff. Returns { ok:true, results } on success
+// (including a genuine empty result) or { ok:false } when every attempt failed
+// transiently — so a throttled lookup is never mistaken for "not found".
+async function robustSearch(fn, arg, { attempts = 3 } = {}) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return { ok: true, results: await fn(arg, { throwOnError: true }) };
+    } catch (e) {
+      warn(`search attempt ${i + 1}/${attempts} failed for "${arg}": ${e.message}`);
+      if (i < attempts - 1) await sleep(1000 * Math.pow(2, i + 1)); // 2s, 4s
     }
-  } catch (e) {
-    warn(`classify screener step failed for "${name}": ${e.message}`);
+  }
+  return { ok: false, results: [] };
+}
+
+// LIVE status classification (critical). screener -> Yahoo -> private, but a
+// transient lookup failure yields "unknown" (NEVER private), so throttling can
+// never persist a listed company as private (A1). Yahoo hits must pass the same
+// name-match as screener before their ticker is adopted (A2).
+export async function classifyStatus(name, { env } = {}) {
+  let transient = false;
+
+  // 1) Indian listed via screener's own search API.
+  const sc = await robustSearch(screenerSearch, name);
+  if (sc.ok) {
+    const match = sc.results.find((m) => looseMatch(m.name, name));
+    if (match) {
+      const code = codeFromScreenerUrl(match.url);
+      if (code) return { status: 'india_listed', ticker: code, name: match.name, screener_url: match.url };
+    }
+  } else {
+    transient = true;
   }
 
-  // 2) Global (non-India) listed via Yahoo search.
-  try {
-    const q = await yahooSearch(name);
-    const equities = (q || []).filter((x) => x.quoteType === 'EQUITY');
+  // 2) Global listed via Yahoo — only adopt an EQUITY whose name matches (A2).
+  const yh = await robustSearch(yahooSearch, name);
+  if (yh.ok) {
+    const equities = (yh.results || [])
+      .filter((x) => x.quoteType === 'EQUITY' && looseMatch(x.longname || x.shortname, name));
     const nonIndia = equities.find((x) => !INDIA_YF_EXCHANGES.has(x.exchange));
     if (nonIndia) {
       return {
@@ -124,8 +138,7 @@ export async function classifyStatus(name, { env } = {}) {
       };
     }
     // An India-exchange Yahoo hit that screener missed: still LISTED, route
-    // through the Yahoo path (global bucket) with a clear note rather than
-    // mis-labelling it private.
+    // through the Yahoo path (global bucket) with a clear note.
     const india = equities[0];
     if (india) {
       return {
@@ -137,18 +150,20 @@ export async function classifyStatus(name, { env } = {}) {
         note: 'Indian listing sourced via Yahoo (not found on screener search)',
       };
     }
-  } catch (e) {
-    warn(`classify yahoo step failed for "${name}": ${e.message}`);
+  } else {
+    transient = true;
   }
 
-  // 3) Neither -> Indian private / unlisted.
-  return { status: 'india_private' };
+  // 3) A confirmed miss is private; an unconfirmed one (any transient failure)
+  //    is "unknown" and must NOT be written to the private bucket.
+  return { status: transient ? 'unknown' : 'india_private' };
 }
 
 // Build the three schema buckets from classified candidates. Never throws.
-export async function findPeers(resolved, { env, onProgress } = {}) {
+export async function findPeers(resolved, { env, onProgress, notes } = {}) {
   const buckets = { india_listed: [], global_listed: [], india_private: [] };
   const seen = { india_listed: new Set(), global_listed: new Set(), india_private: new Set() };
+  const unknowns = []; // classification failed transiently — not private (A1)
 
   const candidates = await recallCandidates(resolved, { env });
 
@@ -211,6 +226,10 @@ export async function findPeers(resolved, { env, onProgress } = {}) {
       });
       rec._yahoo_exchange = cls.yahoo_exchange || null;
       buckets.global_listed.push(rec);
+    } else if (cls.status === 'unknown') {
+      // Lookup failed transiently — do NOT file a possibly-listed co as private.
+      unknowns.push(c.name);
+      continue;
     } else {
       const key = norm(c.name);
       if (seen.india_private.has(key)) continue;
@@ -227,7 +246,15 @@ export async function findPeers(resolved, { env, onProgress } = {}) {
     }
   }
 
+  if (unknowns.length) {
+    const msg = `Status could not be confirmed for ${unknowns.length} candidate(s) after retries ` +
+      `(screener/Yahoo lookup failed — likely throttling): ${unknowns.join(', ')}. ` +
+      `Left OUT of all buckets rather than mislabelled private; re-run to re-check.`;
+    warn(msg);
+    if (Array.isArray(notes)) notes.push(`[${new Date().toISOString()}] ${msg}`);
+  }
   log(`peers classified: ${buckets.india_listed.length} india-listed, ` +
-      `${buckets.global_listed.length} global-listed, ${buckets.india_private.length} india-private`);
+      `${buckets.global_listed.length} global-listed, ${buckets.india_private.length} india-private, ` +
+      `${unknowns.length} unknown`);
   return buckets;
 }

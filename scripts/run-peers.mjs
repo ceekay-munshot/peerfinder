@@ -46,6 +46,9 @@ function rehydrate(run) {
   }
   for (const r of run.buckets.global_listed || []) {
     if (!r._yahoo_symbol && r.ticker) r._yahoo_symbol = r.ticker;
+    // Restore the exchange hint (stripped by publicView) so resumed NYSE/AMEX
+    // peers build the right TradingView ticker instead of defaulting to NASDAQ (A9).
+    if (!r._yahoo_exchange && r.exchange) r._yahoo_exchange = r.exchange;
     if (!Array.isArray(r._errors)) r._errors = [];
     if (!Array.isArray(r.computed_flags)) r.computed_flags = [];
   }
@@ -95,6 +98,7 @@ async function main() {
     // 2) Find true peers + classify live.
     const buckets = await findPeers(resolved, {
       env,
+      notes: run.notes, // so "unknown" (unconfirmable) candidates get a run note (A1)
       onProgress: (p) => log(`classify ${p.index}/${p.total}: ${p.name}`),
     });
     run.buckets = buckets;

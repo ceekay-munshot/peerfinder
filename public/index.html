@@ -4,9 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>True Peer Benchmarking</title>
-  <meta name="description" content="Find a company's or industry's true peers — Indian listed, global listed and Indian private — and benchmark their financials." />
+  <meta name="description" content="Find a company's or industry's true peers — Indian listed, global listed and Indian private — and benchmark their financials with tables, charts and an outperformer scorecard." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
-  <!-- Chart.js is loaded now for the rich dashboard in Prompt 2 (not heavily used yet). -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
   <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -14,7 +13,7 @@
   <header class="site-header">
     <div class="wrap">
       <h1>📊 True Peer Benchmarking</h1>
-      <p class="tagline">Give an <strong>industry</strong> or a <strong>company</strong>. Get its <strong>true peers</strong> — Indian listed, global listed, Indian private — with financials. <span class="muted">(Prompt 1: foundation &amp; data engine.)</span></p>
+      <p class="tagline">Give an <strong>industry</strong> or a <strong>company</strong>. Get its <strong>true peers</strong> — benchmarked with tables, trends and an outperformer scorecard. <span class="muted">(Prompt 2: visual dashboard.)</span></p>
     </div>
   </header>
 
@@ -55,11 +54,10 @@
       </div>
     </section>
 
-    <!-- Results -->
-    <section id="results" class="hidden">
-      <div class="bucket" id="bucket-india"></div>
-      <div class="bucket" id="bucket-global"></div>
-      <div class="bucket" id="bucket-private"></div>
+    <!-- Dashboard -->
+    <section id="dashboard" class="hidden">
+      <nav id="tabs" class="tabs" role="tablist"></nav>
+      <div id="tab-content"></div>
       <details id="notes" class="card notes hidden">
         <summary>Run notes &amp; provenance</summary>
         <ul id="notes-list"></ul>
@@ -67,14 +65,15 @@
     </section>
 
     <section id="empty" class="card muted">
-      Enter an industry or company above and press <strong>Run peer benchmarking</strong>. A run takes a while (it scrapes screener and fetches global data in GitHub Actions); this page polls until the data is committed, then renders it.
+      Enter an industry or company above and press <strong>Run peer benchmarking</strong>, or
+      <a href="#" id="sample-link-2">view the sample run</a>. A live run scrapes screener and fetches global data in GitHub Actions; this page polls until the data is committed, then renders the dashboard.
     </section>
   </main>
 
   <footer class="site-footer wrap">
-    <span class="muted small">Honesty first: blanks stay blank (never 0), computed values are labelled, every peer carries a source. Rich dashboard &amp; outperformer scoring arrive in Prompt 2.</span>
+    <span class="muted small">Honesty first: blanks stay blank (never 0), computed values are labelled with <span class="flag">*</span>, every peer carries a source. Cross-currency revenue is shown in each peer's own currency; the outperformer score uses only unit-free ratios.</span>
   </footer>
 
-  <script src="/app.js" defer></script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>

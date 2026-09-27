@@ -18,7 +18,10 @@ const TS_TYPES = [
 ];
 
 // Search Yahoo for a symbol. Returns [{symbol, exchange, quoteType, shortname, longname, exchDisp}].
-export async function yahooSearch(name) {
+// Pass { throwOnError: true } to surface a transient failure (all attempts
+// failed) instead of returning [] — lets callers tell "failed" from "empty".
+export async function yahooSearch(name, { throwOnError = false } = {}) {
+  let lastErr = null;
   for (let i = 0; i < 2; i++) {
     try {
       const host = yahooHost(i);
@@ -35,9 +38,11 @@ export async function yahooSearch(name) {
         exchDisp: q.exchDisp,
       })).filter((q) => q.symbol);
     } catch (e) {
+      lastErr = e;
       warn(`yahooSearch attempt ${i + 1} failed for "${name}": ${e.message}`);
     }
   }
+  if (throwOnError && lastErr) throw lastErr;
   return [];
 }
 
@@ -118,18 +123,15 @@ function pctSeries(numArr, denArr) {
   return out;
 }
 
+// CAGR over EXACTLY `years` (e.g. sales_cagr_5y needs the point 5 years before
+// the latest). Returns null unless that exact start year is present — never
+// shrinks the window and mislabels a 3-yr span as 5-yr (A4).
 function cagr(series, years) {
   if (!series || series.length < 2) return null;
   const end = series[series.length - 1];
-  // pick the point ~`years` before the end
-  const startYear = end.year - years;
-  let start = series.find((p) => p.year === startYear) ||
-              series.reduce((best, p) => (p.year <= startYear && (!best || p.year > best.year) ? p : best), null) ||
-              series[0];
+  const start = series.find((p) => p.year === end.year - years);
   if (!start || start.value <= 0 || end.value <= 0) return null;
-  const span = end.year - start.year;
-  if (span <= 0) return null;
-  return round((Math.pow(end.value / start.value, 1 / span) - 1) * 100, 2);
+  return round((Math.pow(end.value / start.value, 1 / years) - 1) * 100, 2);
 }
 
 // Fill a global_listed schema record in place. Sets current, series, computed_flags.
@@ -176,6 +178,39 @@ export async function fillGlobalListed(rec, { env } = {}) {
     }
     rec.series.roce_pct = roce;
     if (roce.length) flags.add('roce');
+  }
+
+  // A7 trend series (computed per year where inputs exist). wc_days and pe are
+  // left blank for global peers (no reliable inputs) rather than fabricated.
+  {
+    const invM = byYear(inv), recvM = byYear(recv), payM = byYear(pay);
+    const cogsM = byYear(cogs), revM = byYear(rev), debtM = byYear(debt), eqM = byYear(equity);
+    const days = (numM, denM) => {
+      const out = [];
+      for (const [year, n] of numM) {
+        const d = denM.get(year);
+        if (Number.isFinite(n) && Number.isFinite(d) && d !== 0) out.push({ year, value: round((n / d) * 365, 0) });
+      }
+      return out.sort((a, b) => a.year - b.year);
+    };
+    rec.series.inventory_days = days(invM, cogsM);
+    rec.series.debtor_days = days(recvM, revM);
+    rec.series.payable_days = days(payM, cogsM);
+    const invD = byYear(rec.series.inventory_days), recD = byYear(rec.series.debtor_days), payD = byYear(rec.series.payable_days);
+    const ccc = [];
+    for (const [year, iv] of invD) {
+      const rv = recD.get(year), pv = payD.get(year);
+      if (Number.isFinite(iv) && Number.isFinite(rv) && Number.isFinite(pv)) ccc.push({ year, value: round(iv + rv - pv, 0) });
+    }
+    rec.series.ccc_days = ccc.sort((a, b) => a.year - b.year);
+    const de = [];
+    for (const [year, d] of debtM) {
+      const e = eqM.get(year);
+      if (Number.isFinite(d) && Number.isFinite(e) && e !== 0) de.push({ year, value: round(d / e, 2) });
+    }
+    rec.series.de = de.sort((a, b) => a.year - b.year);
+    if (rec.series.inventory_days.length || rec.series.debtor_days.length || rec.series.ccc_days.length) flags.add('ccc');
+    if (rec.series.de.length) flags.add('de');
   }
 
   // Current snapshot (latest year)

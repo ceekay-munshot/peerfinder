@@ -18,32 +18,236 @@
         "source": "synthetic fixture",
         "currency": "INR",
         "current": {
-          "revenue": 4200, "revenue_year": 2025,
-          "sales_cagr_3y": 14.2, "sales_cagr_5y": 11.8,
-          "ebitda_pct": 18.5, "npm_pct": 9.7,
-          "roce_pct": 21.3, "roe_pct": 18.0,
-          "debtor_days": 42, "inventory_days": 63, "payable_days": 38, "ccc_days": 67, "wc_days": 71,
+          "revenue": 4200,
+          "revenue_year": 2025,
+          "sales_cagr_3y": 14.2,
+          "sales_cagr_5y": 11.8,
+          "ebitda_pct": 18.5,
+          "npm_pct": 9.7,
+          "roce_pct": 21.3,
+          "roe_pct": 18,
+          "debtor_days": 42,
+          "inventory_days": 63,
+          "payable_days": 38,
+          "ccc_days": 67,
+          "wc_days": 71,
           "de": 0.35,
-          "promoter_pct": 58.2, "fii_pct": 12.4, "dii_pct": 9.1,
-          "pe": 28.4, "ev_ebitda": 15.1, "pb": 4.2, "mcap": 32000
+          "promoter_pct": 58.2,
+          "fii_pct": 12.4,
+          "dii_pct": 9.1,
+          "pe": 28.4,
+          "ev_ebitda": 15.1,
+          "pb": 4.2,
+          "mcap": 32000
         },
         "series": {
-          "revenue": [{ "year": 2023, "value": 3200 }, { "year": 2024, "value": 3700 }, { "year": 2025, "value": 4200 }],
-          "ebitda_pct": [{ "year": 2023, "value": 16.9 }, { "year": 2024, "value": 17.8 }, { "year": 2025, "value": 18.5 }],
-          "npm_pct": [{ "year": 2023, "value": 8.1 }, { "year": 2024, "value": 9.0 }, { "year": 2025, "value": 9.7 }],
-          "roce_pct": [{ "year": 2023, "value": 19.0 }, { "year": 2024, "value": 20.4 }, { "year": 2025, "value": 21.3 }],
+          "revenue": [
+            {
+              "year": 2023,
+              "value": 3200
+            },
+            {
+              "year": 2024,
+              "value": 3700
+            },
+            {
+              "year": 2025,
+              "value": 4200
+            }
+          ],
+          "ebitda_pct": [
+            {
+              "year": 2023,
+              "value": 16.9
+            },
+            {
+              "year": 2024,
+              "value": 17.8
+            },
+            {
+              "year": 2025,
+              "value": 18.5
+            }
+          ],
+          "npm_pct": [
+            {
+              "year": 2023,
+              "value": 8.1
+            },
+            {
+              "year": 2024,
+              "value": 9
+            },
+            {
+              "year": 2025,
+              "value": 9.7
+            }
+          ],
+          "roce_pct": [
+            {
+              "year": 2023,
+              "value": 19
+            },
+            {
+              "year": 2024,
+              "value": 20.4
+            },
+            {
+              "year": 2025,
+              "value": 21.3
+            }
+          ],
           "roe_pct": [],
-          "promoter_pct": [{ "year": 2024, "value": 58.2 }, { "year": 2025, "value": 58.2 }],
-          "fii_pct": [{ "year": 2024, "value": 11.8 }, { "year": 2025, "value": 12.4 }],
-          "dii_pct": [{ "year": 2024, "value": 8.6 }, { "year": 2025, "value": 9.1 }]
+          "promoter_pct": [
+            {
+              "year": 2024,
+              "value": 58.2
+            },
+            {
+              "year": 2025,
+              "value": 58.2
+            }
+          ],
+          "fii_pct": [
+            {
+              "year": 2024,
+              "value": 11.8
+            },
+            {
+              "year": 2025,
+              "value": 12.4
+            }
+          ],
+          "dii_pct": [
+            {
+              "year": 2024,
+              "value": 8.6
+            },
+            {
+              "year": 2025,
+              "value": 9.1
+            }
+          ],
+          "debtor_days": [
+            {
+              "year": 2023,
+              "value": 48
+            },
+            {
+              "year": 2024,
+              "value": 45
+            },
+            {
+              "year": 2025,
+              "value": 42
+            }
+          ],
+          "inventory_days": [
+            {
+              "year": 2023,
+              "value": 70
+            },
+            {
+              "year": 2024,
+              "value": 66
+            },
+            {
+              "year": 2025,
+              "value": 63
+            }
+          ],
+          "payable_days": [
+            {
+              "year": 2023,
+              "value": 35
+            },
+            {
+              "year": 2024,
+              "value": 36
+            },
+            {
+              "year": 2025,
+              "value": 38
+            }
+          ],
+          "ccc_days": [
+            {
+              "year": 2023,
+              "value": 83
+            },
+            {
+              "year": 2024,
+              "value": 75
+            },
+            {
+              "year": 2025,
+              "value": 67
+            }
+          ],
+          "wc_days": [
+            {
+              "year": 2023,
+              "value": 80
+            },
+            {
+              "year": 2024,
+              "value": 75
+            },
+            {
+              "year": 2025,
+              "value": 71
+            }
+          ],
+          "de": [
+            {
+              "year": 2023,
+              "value": 0.55
+            },
+            {
+              "year": 2024,
+              "value": 0.45
+            },
+            {
+              "year": 2025,
+              "value": 0.35
+            }
+          ],
+          "pe": [
+            {
+              "year": 2023,
+              "value": 22
+            },
+            {
+              "year": 2024,
+              "value": 25.5
+            },
+            {
+              "year": 2025,
+              "value": 28.4
+            }
+          ]
         },
         "price": {
-          "currency": "INR", "last_close": 1875.5, "as_of": "2025-12-31",
+          "currency": "INR",
+          "last_close": 1875.5,
+          "as_of": "2025-12-31",
           "history": [
-            { "date": "2025-10-01", "close": 1720.0 },
-            { "date": "2025-11-01", "close": 1795.5 },
-            { "date": "2025-12-01", "close": 1840.2 },
-            { "date": "2025-12-31", "close": 1875.5 }
+            {
+              "date": "2025-10-01",
+              "close": 1720
+            },
+            {
+              "date": "2025-11-01",
+              "close": 1795.5
+            },
+            {
+              "date": "2025-12-01",
+              "close": 1840.2
+            },
+            {
+              "date": "2025-12-31",
+              "close": 1875.5
+            }
           ]
         }
       },
@@ -57,31 +261,220 @@
         "source": "synthetic fixture",
         "currency": "INR",
         "current": {
-          "revenue": 2600, "revenue_year": 2025,
-          "sales_cagr_3y": 22.0, "sales_cagr_5y": 18.5,
-          "ebitda_pct": 24.0, "npm_pct": 15.2,
-          "roce_pct": 31.5, "roe_pct": 27.8,
-          "debtor_days": 30, "inventory_days": 25, "payable_days": 45, "ccc_days": 10, "wc_days": 18,
-          "de": 0.10,
-          "promoter_pct": 64.0, "fii_pct": 8.0, "dii_pct": 6.5,
-          "pe": 34.0, "ev_ebitda": 19.5, "pb": 6.1, "mcap": 21000
+          "revenue": 2600,
+          "revenue_year": 2025,
+          "sales_cagr_3y": 22,
+          "sales_cagr_5y": 18.5,
+          "ebitda_pct": 24,
+          "npm_pct": 15.2,
+          "roce_pct": 31.5,
+          "roe_pct": 27.8,
+          "debtor_days": 30,
+          "inventory_days": 25,
+          "payable_days": 45,
+          "ccc_days": 10,
+          "wc_days": 18,
+          "de": 0.1,
+          "promoter_pct": 64,
+          "fii_pct": 8,
+          "dii_pct": 6.5,
+          "pe": 34,
+          "ev_ebitda": 19.5,
+          "pb": 6.1,
+          "mcap": 21000
         },
         "series": {
-          "revenue": [{ "year": 2023, "value": 1750 }, { "year": 2024, "value": 2150 }, { "year": 2025, "value": 2600 }],
-          "ebitda_pct": [{ "year": 2023, "value": 22.1 }, { "year": 2024, "value": 23.2 }, { "year": 2025, "value": 24.0 }],
-          "npm_pct": [{ "year": 2023, "value": 13.0 }, { "year": 2024, "value": 14.1 }, { "year": 2025, "value": 15.2 }],
-          "roce_pct": [{ "year": 2023, "value": 28.0 }, { "year": 2024, "value": 30.1 }, { "year": 2025, "value": 31.5 }],
+          "revenue": [
+            {
+              "year": 2023,
+              "value": 1750
+            },
+            {
+              "year": 2024,
+              "value": 2150
+            },
+            {
+              "year": 2025,
+              "value": 2600
+            }
+          ],
+          "ebitda_pct": [
+            {
+              "year": 2023,
+              "value": 22.1
+            },
+            {
+              "year": 2024,
+              "value": 23.2
+            },
+            {
+              "year": 2025,
+              "value": 24
+            }
+          ],
+          "npm_pct": [
+            {
+              "year": 2023,
+              "value": 13
+            },
+            {
+              "year": 2024,
+              "value": 14.1
+            },
+            {
+              "year": 2025,
+              "value": 15.2
+            }
+          ],
+          "roce_pct": [
+            {
+              "year": 2023,
+              "value": 28
+            },
+            {
+              "year": 2024,
+              "value": 30.1
+            },
+            {
+              "year": 2025,
+              "value": 31.5
+            }
+          ],
           "roe_pct": [],
-          "promoter_pct": [{ "year": 2025, "value": 64.0 }],
-          "fii_pct": [{ "year": 2025, "value": 8.0 }],
-          "dii_pct": [{ "year": 2025, "value": 6.5 }]
+          "promoter_pct": [
+            {
+              "year": 2025,
+              "value": 64
+            }
+          ],
+          "fii_pct": [
+            {
+              "year": 2025,
+              "value": 8
+            }
+          ],
+          "dii_pct": [
+            {
+              "year": 2025,
+              "value": 6.5
+            }
+          ],
+          "debtor_days": [
+            {
+              "year": 2023,
+              "value": 34
+            },
+            {
+              "year": 2024,
+              "value": 32
+            },
+            {
+              "year": 2025,
+              "value": 30
+            }
+          ],
+          "inventory_days": [
+            {
+              "year": 2023,
+              "value": 30
+            },
+            {
+              "year": 2024,
+              "value": 28
+            },
+            {
+              "year": 2025,
+              "value": 25
+            }
+          ],
+          "payable_days": [
+            {
+              "year": 2023,
+              "value": 42
+            },
+            {
+              "year": 2024,
+              "value": 44
+            },
+            {
+              "year": 2025,
+              "value": 45
+            }
+          ],
+          "ccc_days": [
+            {
+              "year": 2023,
+              "value": 22
+            },
+            {
+              "year": 2024,
+              "value": 16
+            },
+            {
+              "year": 2025,
+              "value": 10
+            }
+          ],
+          "wc_days": [
+            {
+              "year": 2023,
+              "value": 26
+            },
+            {
+              "year": 2024,
+              "value": 22
+            },
+            {
+              "year": 2025,
+              "value": 18
+            }
+          ],
+          "de": [
+            {
+              "year": 2023,
+              "value": 0.18
+            },
+            {
+              "year": 2024,
+              "value": 0.14
+            },
+            {
+              "year": 2025,
+              "value": 0.1
+            }
+          ],
+          "pe": [
+            {
+              "year": 2023,
+              "value": 26
+            },
+            {
+              "year": 2024,
+              "value": 30
+            },
+            {
+              "year": 2025,
+              "value": 34
+            }
+          ]
         },
         "price": {
-          "currency": "INR", "last_close": 990.0, "as_of": "2025-12-31",
+          "currency": "INR",
+          "last_close": 990,
+          "as_of": "2025-12-31",
           "history": [
-            { "date": "2025-10-01", "close": 900.0 },
-            { "date": "2025-11-01", "close": 945.0 },
-            { "date": "2025-12-31", "close": 990.0 }
+            {
+              "date": "2025-10-01",
+              "close": 900
+            },
+            {
+              "date": "2025-11-01",
+              "close": 945
+            },
+            {
+              "date": "2025-12-31",
+              "close": 990
+            }
           ]
         }
       }
@@ -97,34 +490,199 @@
         "source": "synthetic fixture",
         "currency": "USD",
         "current": {
-          "revenue": 5400000000, "revenue_year": 2024,
-          "sales_cagr_3y": 8.5, "sales_cagr_5y": null,
-          "ebitda_pct": 21.0, "npm_pct": 12.5,
-          "roce_pct": 17.4, "roe_pct": 19.9,
-          "debtor_days": 55, "inventory_days": 80, "payable_days": 60, "ccc_days": 75, "wc_days": null,
+          "revenue": 5400000000,
+          "revenue_year": 2024,
+          "sales_cagr_3y": 8.5,
+          "sales_cagr_5y": null,
+          "ebitda_pct": 21,
+          "npm_pct": 12.5,
+          "roce_pct": 17.4,
+          "roe_pct": 19.9,
+          "debtor_days": 55,
+          "inventory_days": 80,
+          "payable_days": 60,
+          "ccc_days": 75,
+          "wc_days": null,
           "de": 0.6,
-          "promoter_pct": 4.2, "fii_pct": null, "dii_pct": null,
-          "pe": 22.0, "ev_ebitda": 13.0, "pb": 3.1, "mcap": 42000000000
+          "promoter_pct": 4.2,
+          "fii_pct": null,
+          "dii_pct": null,
+          "pe": 22,
+          "ev_ebitda": 13,
+          "pb": 3.1,
+          "mcap": 42000000000
         },
         "series": {
-          "revenue": [{ "year": 2022, "value": 4600000000 }, { "year": 2023, "value": 5000000000 }, { "year": 2024, "value": 5400000000 }],
-          "ebitda_pct": [{ "year": 2022, "value": 19.5 }, { "year": 2023, "value": 20.2 }, { "year": 2024, "value": 21.0 }],
-          "npm_pct": [{ "year": 2022, "value": 10.9 }, { "year": 2023, "value": 11.7 }, { "year": 2024, "value": 12.5 }],
-          "roce_pct": [{ "year": 2022, "value": 15.9 }, { "year": 2023, "value": 16.7 }, { "year": 2024, "value": 17.4 }],
-          "roe_pct": [{ "year": 2022, "value": 18.0 }, { "year": 2023, "value": 19.1 }, { "year": 2024, "value": 19.9 }],
+          "revenue": [
+            {
+              "year": 2022,
+              "value": 4600000000
+            },
+            {
+              "year": 2023,
+              "value": 5000000000
+            },
+            {
+              "year": 2024,
+              "value": 5400000000
+            }
+          ],
+          "ebitda_pct": [
+            {
+              "year": 2022,
+              "value": 19.5
+            },
+            {
+              "year": 2023,
+              "value": 20.2
+            },
+            {
+              "year": 2024,
+              "value": 21
+            }
+          ],
+          "npm_pct": [
+            {
+              "year": 2022,
+              "value": 10.9
+            },
+            {
+              "year": 2023,
+              "value": 11.7
+            },
+            {
+              "year": 2024,
+              "value": 12.5
+            }
+          ],
+          "roce_pct": [
+            {
+              "year": 2022,
+              "value": 15.9
+            },
+            {
+              "year": 2023,
+              "value": 16.7
+            },
+            {
+              "year": 2024,
+              "value": 17.4
+            }
+          ],
+          "roe_pct": [
+            {
+              "year": 2022,
+              "value": 18
+            },
+            {
+              "year": 2023,
+              "value": 19.1
+            },
+            {
+              "year": 2024,
+              "value": 19.9
+            }
+          ],
           "promoter_pct": [],
           "fii_pct": [],
-          "dii_pct": []
+          "dii_pct": [],
+          "debtor_days": [
+            {
+              "year": 2022,
+              "value": 58
+            },
+            {
+              "year": 2023,
+              "value": 56
+            },
+            {
+              "year": 2024,
+              "value": 55
+            }
+          ],
+          "inventory_days": [
+            {
+              "year": 2022,
+              "value": 85
+            },
+            {
+              "year": 2023,
+              "value": 82
+            },
+            {
+              "year": 2024,
+              "value": 80
+            }
+          ],
+          "payable_days": [
+            {
+              "year": 2022,
+              "value": 58
+            },
+            {
+              "year": 2023,
+              "value": 59
+            },
+            {
+              "year": 2024,
+              "value": 60
+            }
+          ],
+          "ccc_days": [
+            {
+              "year": 2022,
+              "value": 85
+            },
+            {
+              "year": 2023,
+              "value": 79
+            },
+            {
+              "year": 2024,
+              "value": 75
+            }
+          ],
+          "de": [
+            {
+              "year": 2022,
+              "value": 0.7
+            },
+            {
+              "year": 2023,
+              "value": 0.65
+            },
+            {
+              "year": 2024,
+              "value": 0.6
+            }
+          ],
+          "wc_days": [],
+          "pe": []
         },
         "price": {
-          "currency": "USD", "last_close": 214.3, "as_of": "2025-12-31",
+          "currency": "USD",
+          "last_close": 214.3,
+          "as_of": "2025-12-31",
           "history": [
-            { "date": "2025-10-01", "close": 198.0 },
-            { "date": "2025-11-01", "close": 205.5 },
-            { "date": "2025-12-31", "close": 214.3 }
+            {
+              "date": "2025-10-01",
+              "close": 198
+            },
+            {
+              "date": "2025-11-01",
+              "close": 205.5
+            },
+            {
+              "date": "2025-12-31",
+              "close": 214.3
+            }
           ]
         },
-        "computed_flags": ["roce", "ccc", "roe"],
+        "computed_flags": [
+          "roce",
+          "ccc",
+          "roe"
+        ],
         "note": "SYNTHETIC — ROCE/CCC/ROE computed from statement lines; promoter_pct approximated from insiders %."
       }
     ],
@@ -143,6 +701,7 @@
   },
   "notes": [
     "SYNTHETIC SAMPLE — every number here is illustrative fixture data, not real. A real run overwrites this file with sourced data.",
-    "This fixture exists to demonstrate the schema (schema_version 1) and the UI before the first live run."
+    "This fixture exists to demonstrate the schema (schema_version 1) and the UI before the first live run.",
+    "A7 trend series (working-capital days, D/E, P/E) added to sample records to demonstrate the Trend view."
   ]
 }
